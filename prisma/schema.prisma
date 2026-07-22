@@ -1,0 +1,209 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Enums ----------
+
+enum WeightGoal {
+  LOSE
+  MAINTAIN
+  GAIN
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+  VERY_ACTIVE
+}
+
+enum DietaryRestriction {
+  VEGETARIAN
+  VEGAN
+  PESCATARIAN
+  KETO
+  PALEO
+  GLUTEN_FREE
+  DAIRY_FREE
+  NUT_FREE
+  HALAL
+  KOSHER
+  LOW_FODMAP
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  NONE
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+// ---------- Core models ----------
+
+model User {
+  id            String   @id @default(cuid())
+  clerkId       String   @unique
+  email         String   @unique
+  name          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  profile       UserProfile?
+  mealPlans     MealPlan[]
+  fridgeScans   FridgeScan[]
+  subscription  Subscription?
+}
+
+// One row of onboarding answers — weight goal, restrictions, budget
+model UserProfile {
+  id                   String               @id @default(cuid())
+  userId               String               @unique
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  weightGoal           WeightGoal
+  currentWeightLbs      Float?
+  targetWeightLbs        Float?
+  heightInches         Float?
+  age                  Int?
+  sex                  String?
+  activityLevel        ActivityLevel        @default(MODERATE)
+
+  dietaryRestrictions  DietaryRestriction[]
+  allergies            String[]             @default([])
+  dislikedIngredients  String[]             @default([])
+
+  weeklyBudgetUsd      Float
+  householdSize        Int                  @default(1)
+
+  dailyCalorieTarget   Int?
+  proteinTargetG       Int?
+  carbTargetG          Int?
+  fatTargetG           Int?
+
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+}
+
+model MealPlan {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  weekOf        DateTime
+  totalCostUsd  Float?
+  status        String     @default("draft") // draft | active | archived
+
+  days          MealPlanDay[]
+  groceryList   GroceryList?
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model MealPlanDay {
+  id            String     @id @default(cuid())
+  mealPlanId    String
+  mealPlan      MealPlan   @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+
+  dayIndex      Int        // 0–6 (Mon–Sun)
+  date          DateTime
+
+  meals         Meal[]
+
+  @@unique([mealPlanId, dayIndex])
+}
+
+model Meal {
+  id              String       @id @default(cuid())
+  mealPlanDayId   String
+  mealPlanDay     MealPlanDay  @relation(fields: [mealPlanDayId], references: [id], onDelete: Cascade)
+
+  type            MealType
+  recipeId        String
+  recipe          Recipe       @relation(fields: [recipeId], references: [id])
+  servings        Float        @default(1)
+}
+
+// Recipes are cached/reusable across plans so repeated AI generations
+// don't re-write identical dishes, and so fridge-scan suggestions can
+// point at the same catalog.
+model Recipe {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  instructions  String[] @default([])
+  ingredients   Json     // [{ name, quantity, unit, estCostUsd }]
+
+  calories      Int
+  proteinG      Int
+  carbG         Int
+  fatG          Int
+
+  prepMinutes   Int?
+  cookMinutes   Int?
+  estCostUsd    Float?
+  tags          String[] @default([]) // e.g. ["vegan","under-20-min"]
+  imageUrl      String?
+
+  source        String   @default("ai_generated") // ai_generated | fridge_scan | manual
+
+  meals         Meal[]
+  createdAt     DateTime @default(now())
+}
+
+model GroceryList {
+  id           String   @id @default(cuid())
+  mealPlanId   String   @unique
+  mealPlan     MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+
+  items        Json     // [{ name, quantity, unit, category, estCostUsd, checked }]
+  estTotalUsd  Float
+
+  createdAt    DateTime @default(now())
+}
+
+// A "photo of my fridge" scan → detected ingredients → suggested recipes
+model FridgeScan {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  imageUrl          String
+  detectedItems     String[] @default([])
+  suggestedRecipeIds String[] @default([])
+
+  createdAt         DateTime @default(now())
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  status               SubscriptionStatus @default(NONE)
+  currentPeriodEnd     DateTime?
+
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
