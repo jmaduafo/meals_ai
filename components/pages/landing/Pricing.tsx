@@ -14,11 +14,7 @@ interface Plan {
 function Pricing() {
   const FREE_PLAN: Plan[] = [
     {
-      feature: "Onboarding (goal, diet, budget)",
-      isAllowed: true,
-    },
-    {
-      feature: "1/month meal plan generation",
+      feature: "3/month AI meal plan generation",
       isAllowed: true,
     },
     {
@@ -34,7 +30,7 @@ function Pricing() {
       isAllowed: true,
     },
     {
-      feature: "Grocery delivery links",
+      feature: "Basic progress tracking",
       isAllowed: true,
     },
     {
@@ -50,11 +46,7 @@ function Pricing() {
 
   const PREMIUM_PLAN: Plan[] = [
     {
-      feature: "Onboarding (goal, diet, budget)",
-      isAllowed: true,
-    },
-    {
-      feature: "Unlimited meal plan generation",
+      feature: "Unlimited AI meal plan generation",
       isAllowed: true,
     },
     {
@@ -70,7 +62,7 @@ function Pricing() {
       isAllowed: true,
     },
     {
-      feature: "Grocery delivery links",
+      feature: "Advanced analytics & exports",
       isAllowed: true,
     },
     {
@@ -95,7 +87,7 @@ function Pricing() {
       />
       <div className="w-full lg-[85%] xl:w-[75%] 2xl:w-[60%] mx-auto grid md:grid-cols-2 gap-6" id="pricing">
         <PlanCard planType="free" price={0} item={FREE_PLAN} />
-        <PlanCard planType="plus" price={9.99} item={PREMIUM_PLAN} />
+        <PlanCard planType="pro" price={9.99} item={PREMIUM_PLAN} />
       </div>
     </section>
   );
@@ -108,7 +100,7 @@ function PlanCard({
   price,
   item,
 }: {
-  readonly planType: "free" | "plus";
+  readonly planType: "free" | "pro";
   readonly price: number;
   readonly item: Plan[];
 }) {
