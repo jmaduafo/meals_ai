@@ -70,6 +70,7 @@ model User {
   profile       UserProfile?
   mealPlans     MealPlan[]
   fridgeScans   FridgeScan[]
+  weightLogs    WeightLog[]
   subscription  Subscription?
 }
 
@@ -141,6 +142,11 @@ model Meal {
   recipeId        String
   recipe          Recipe       @relation(fields: [recipeId], references: [id])
   servings        Float        @default(1)
+
+  // "Actual" side of actual-vs-target tracking: has the user logged this
+  // meal as eaten? Summed against MealPlanDay.date to get a day's totals.
+  eaten           Boolean      @default(false)
+  eatenAt         DateTime?
 }
 
 // Recipes are cached/reusable across plans so repeated AI generations
@@ -175,7 +181,10 @@ model GroceryList {
   mealPlanId   String   @unique
   mealPlan     MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
 
-  items        Json     // [{ name, quantity, unit, category, estCostUsd, checked }]
+  // [{ name, quantity, unit, category, estCostUsd, checked }] — `checked`
+  // is the "actual" side of budget tracking: sum(estCostUsd where checked)
+  // is treated as money actually spent so far this week.
+  items        Json
   estTotalUsd  Float
 
   createdAt    DateTime @default(now())
@@ -192,6 +201,19 @@ model FridgeScan {
   suggestedRecipeIds String[] @default([])
 
   createdAt         DateTime @default(now())
+}
+
+// A single weigh-in entry. Weight can't be derived from anything else in
+// the system, so unlike calories/budget it has to be logged directly.
+model WeightLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  weightLbs Float
+  loggedAt  DateTime @default(now())
+
+  @@index([userId, loggedAt])
 }
 
 model Subscription {

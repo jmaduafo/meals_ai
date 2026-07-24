@@ -1,14 +1,19 @@
-import OnboardingForm  from "@/components/pages/onboarding/OnboardingForm";
+import Header2 from "@/components/headings/Header2";
+import Paragraph from "@/components/headings/Paragraph";
+import OnboardingForm from "@/components/pages/onboarding/OnboardingForm";
 
 export default function OnboardingPage() {
   return (
-    <main className="min-h-screen bg-paper py-16">
-      <div className="container-app max-w-2xl">
-        <p className="font-mono text-xs uppercase tracking-widest text-sage-600">Step 1 of 1</p>
-        <h1 className="mt-2 font-display text-3xl">Let's set the table</h1>
-        <p className="mt-2 text-ink/70">
-          A few details so every recipe we generate actually fits your goal, diet, and budget.
-        </p>
+    <main className="min-h-screen py-16 max-w-2xl mx-auto">
+      <div className="w-full">
+        <Paragraph text="Step 1 of 1" className="uppercase" />
+        <div className="flex flex-col gap-1 mt-2">
+          <Header2 text="Let's set the table" />
+          <Paragraph
+            text="A few details so every recipe we generate actually fits your goal, diet, and budget."
+            className=""
+          />
+        </div>
         <div className="mt-10">
           <OnboardingForm />
         </div>

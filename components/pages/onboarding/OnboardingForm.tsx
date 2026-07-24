@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 
 const RESTRICTIONS: { value: DietaryRestriction; label: string }[] = [
   { value: "VEGETARIAN", label: "Vegetarian" },
@@ -66,6 +67,16 @@ export default function OnboardingForm() {
     );
   }
 
+  const weightGoal = (goal: string) => {
+    if (goal === "LOSE") {
+      return "Lose weight"
+    } else if (goal === "GAIN") {
+      return "Gain weight"
+    } else {
+      return "Maintain"
+    }
+  }
+
   async function onSubmit(data: OnboardingInput) {
     setSubmitting(true);
     try {
@@ -85,6 +96,7 @@ export default function OnboardingForm() {
     }
   }
 
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
       {/* Weight goal */}
@@ -100,13 +112,13 @@ export default function OnboardingForm() {
                   type="button"
                   key={goal}
                   onClick={() => field.onChange(goal)}
-                  className={`rounded-md border px-4 py-3 text-sm font-medium capitalize transition ${
+                  className={`rounded-md border border-border px-4 py-3 text-sm font-medium capitalize transition ${
                     field.value === goal
-                      ? "border-forest-700 bg-forest-100 text-forest-700"
-                      : "border-border bg-white hover:bg-sage-200/40"
+                      ? "bg-secondary-foreground text-secondary dark:bg-secondary dark:text-secondary-foreground"
+                      : "bg-secondary hover:bg-secondary/40 dark:bg-secondary-foreground dark:hover:bg-secondary-foreground/40"
                   }`}
                 >
-                  {goal === "LOSE" ? "Lose weight" : goal === "GAIN" ? "Gain weight" : "Maintain"}
+                  {weightGoal(goal)}
                 </button>
               ))}
             </div>
@@ -199,8 +211,8 @@ export default function OnboardingForm() {
         </Field>
       </section>
 
-      <Button type="submit" size="lg"  disabled={submitting} className="w-full sm:w-auto">
-        {submitting ? "Saving…" : "Build my meal plan"}
+      <Button type="submit" size="lg"  disabled={submitting} className="w-full sm:w-auto px-4">
+        {submitting ? <Spinner/> : "Build my meal plan"}
       </Button>
     </form>
   );
@@ -212,18 +224,18 @@ function Field({
   required,
   children,
 }: {
-  label: string;
-  error?: string;
-  required?: boolean;
-  children: React.ReactNode;
+  readonly label: string;
+  readonly error?: string;
+  readonly required?: boolean;
+  readonly children: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
       <Label>
-        {label} {required && <span className="text-tomato-500">*</span>}
+        {label} {required && <span className="">*</span>}
       </Label>
       {children}
-      {error && <p className="text-xs text-tomato-500">{error}</p>}
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
 }
